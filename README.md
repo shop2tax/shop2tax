@@ -65,7 +65,7 @@ Mit **shop2tax** versuche ich genau diesen Kosten entgegen zu wirken. Dabei ist 
 - **GoBD-Compliance** — WORM-Storage, Audit-Log, Finalisierung mit Sperrung, Jahresabschluss
 - **Dashboard** — Gewinn/Verlust, Kleinunternehmer-Schwelle, Buchungsfortschritt, KI-Kosten
 
-> **Austauschbar by Design:** shop2tax ist so gebaut, dass Integrationen jederzeit ersetzt werden können. Billbee lässt sich gegen eine andere WaWi tauschen, Google Cloud Storage gegen jeden Storage-Anbieter mit WORM-Support (z. B. AWS S3 Object Lock). Kein Vendor Lock-in.
+> **Austauschbar by Design:** shop2tax ist so gebaut, dass Integrationen jederzeit ersetzt werden können. Billbee lässt sich gegen eine andere WaWi tauschen, Google Cloud Storage gegen jeden Storage-Anbieter mit WORM-Support (z. B. AWS S3 Object Lock). Keine Anbieterabhängigkeit.
 
 &nbsp;
 
@@ -85,21 +85,24 @@ Mit **shop2tax** versuche ich genau diesen Kosten entgegen zu wirken. Dabei ist 
 ### Erledigt
 - [x] Universeller Bank-CSV-Import mit Auto-Erkennung
 - [x] Marktplatz-CSV-Import (Amazon, Etsy, Shopify, Stripe)
+- [x] Dedizierter Etsy-Parser — 13 Transaktionstypen, §13b Reverse Charge, Verrechnungskonto, Sammelbelege
+- [x] Dedizierter Shopify-Parser — Payment Transactions mit automatischer Gebührentrennung
+- [x] Reverse Charge (§13b UStG) — Automatische Erkennung von EU-Auslands-Gebühren (z. B. Etsy Ireland), korrekte Steuerschuldumkehr auf Belegebene, USt-VA-konforme Kontierung, Compliance-Endpoint zur Verifizierung
+- [x] Sammelbelege (M:N) — Mehrere Transaktionen mit einem Beleg verknüpfen (Bulk Linking)
 - [x] Belegverwaltung mit GoBD-Compliance (WORM, Audit-Log)
 - [x] OCR-Belegextraktion (Gemini, OpenAI, Claude) + ZUGFeRD/XRechnung
-- [x] SKR03-Kontierung mit lernenden Vorschlägen
+- [x] SKR03-Kontierung mit lernenden Vorschlägen + Kontenverwaltung in der UI
 - [x] DATEV-Export (Buchungsstapel + Belegdokumente als ZIP)
 - [x] Billbee-Integration (Aufträge, Belege, PDF-Download)
 - [x] PayPal-API-Sync (Transaktionen, Gebührentrennung)
 - [x] Dashboard (Gewinn/Verlust, Kleinunternehmer-Schwelle, KI-Kosten)
+- [x] Dark Mode
+- [x] Einrichtung ohne Konfiguration (install.sh / install.ps1)
 
 ### Geplant
 
-**Dedizierte Marktplatz-Parser** — Aktuell nutzen alle Marktplatz-CSVs den generischen Parser mit manuellem Spalten-Mapping. Geplant sind dedizierte Parser, die marktplatzspezifische Besonderheiten automatisch erkennen und korrekt verbuchen:
-
-- [ ] **Etsy-Parser** — Automatische Erkennung aller 12+ Transaktionstypen (Sales, Fees, Refunds, Ads, Payouts), korrekte §13b Reverse-Charge-Behandlung je nach Steuerstatus, Verrechnungskonto (1201) mit Saldoabstimmung gegen Etsy-Dashboard, Geldtransit-Buchungen für Auszahlungen
-- [ ] **Shopify-Parser** — Analoges Konzept für Shopify Payments mit Gebührentrennung und Auszahlungsverfolgung
-- [ ] **Amazon-Parser** — Settlement Reports mit Marketplace-spezifischer Gebührenstruktur (FBA, Referral Fees, Advertising)
+**Amazon-Parser**
+- [ ] Dedizierter Parser für Settlement Reports mit Marketplace-spezifischer Gebührenstruktur (FBA, Referral Fees, Advertising)
 
 **PayPal-Gebühren-Kontierung**
 - [ ] PayPal-Transaktionsgebühren werden aktuell importiert, aber noch nicht automatisch als separate Betriebsausgaben auf eigene SKR03-Konten verbucht.
