@@ -78,6 +78,10 @@ Mit **shop2tax** versuche ich genau diesen Kosten entgegen zu wirken. Dabei ist 
 | Datenbank | PostgreSQL 16, SQLAlchemy 2, Alembic |
 | Infrastruktur | Docker Compose, Caddy (Prod) |
 
+## 🤖 Claude Code Integration
+
+Dieses Projekt enthält gepflegte [Claude Code](https://docs.anthropic.com/en/docs/claude-code) Skills für Backend (`shop2tax-api`) und Frontend (`shop2tax-web`). Die Skills dokumentieren Architektur-Patterns, Code-Konventionen und Projekt-spezifische Workflows — so kann Claude Code sofort produktiv mitarbeiten, ohne erst die Codebasis verstehen zu müssen.
+
 &nbsp;
 
 ## 📍 Roadmap
@@ -87,6 +91,7 @@ Mit **shop2tax** versuche ich genau diesen Kosten entgegen zu wirken. Dabei ist 
 - [x] Marktplatz-CSV-Import (Amazon, Etsy, Shopify, Stripe)
 - [x] Dedizierter Etsy-Parser — 13 Transaktionstypen, §13b Reverse Charge, Verrechnungskonto, Sammelbelege
 - [x] Dedizierter Shopify-Parser — Payment Transactions mit automatischer Gebührentrennung
+- [x] Dedizierter Amazon-Parser — Settlement Reports mit Marketplace-spezifischer Gebührenstruktur (FBA, Referral Fees, Advertising)
 - [x] Reverse Charge (§13b UStG) — Automatische Erkennung von EU-Auslands-Gebühren (z. B. Etsy Ireland), korrekte Steuerschuldumkehr auf Belegebene, USt-VA-konforme Kontierung, Compliance-Endpoint zur Verifizierung
 - [x] Sammelbelege (M:N) — Mehrere Transaktionen mit einem Beleg verknüpfen (Bulk Linking)
 - [x] Belegverwaltung mit GoBD-Compliance (WORM, Audit-Log)
@@ -100,9 +105,6 @@ Mit **shop2tax** versuche ich genau diesen Kosten entgegen zu wirken. Dabei ist 
 - [x] Einrichtung ohne Konfiguration (install.sh / install.ps1)
 
 ### Geplant
-
-**Amazon-Parser**
-- [ ] Dedizierter Parser für Settlement Reports mit Marketplace-spezifischer Gebührenstruktur (FBA, Referral Fees, Advertising)
 
 **PayPal-Gebühren-Kontierung**
 - [ ] PayPal-Transaktionsgebühren werden aktuell importiert, aber noch nicht automatisch als separate Betriebsausgaben auf eigene SKR03-Konten verbucht.
