@@ -100,14 +100,16 @@ Dieses Projekt enthält gepflegte [Claude Code](https://docs.anthropic.com/en/do
 - [x] DATEV-Export (Buchungsstapel + Belegdokumente als ZIP)
 - [x] Billbee-Integration (Aufträge, Belege, PDF-Download)
 - [x] PayPal-API-Sync (Transaktionen, Gebührentrennung)
+- [x] PayPal-Gebühren-Kontierung — Gebühren als separate Transactions importiert, SKR03 4970 via Pattern-Learning, monatlicher Kontoauszug als Sammelbeleg
+- [x] Automatische Belegzuordnung (Billbee) — Transaktionen und Belege per Order-ID verknüpfen, bidirektional nach CSV-Import und Billbee-Sync
 - [x] Dashboard (Gewinn/Verlust, Kleinunternehmer-Schwelle, KI-Kosten)
 - [x] Dark Mode
 - [x] Einrichtung ohne Konfiguration (install.sh / install.ps1)
 
 ### Geplant
 
-**PayPal-Gebühren-Kontierung**
-- [ ] PayPal-Transaktionsgebühren werden aktuell importiert, aber noch nicht automatisch als separate Betriebsausgaben auf eigene SKR03-Konten verbucht.
+**Automatische Belegzuordnung (PayPal, Banken)**
+- [ ] Transaktionen und Belege automatisch verknüpfen per Betrag, Datum, Empfänger und weiteren Faktoren
 
 **finAPI-Anbindung**
 - [ ] Automatischer Banktransaktions-Import per PSD2-Schnittstelle, kein manueller CSV-Download mehr nötig
