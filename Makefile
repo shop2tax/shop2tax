@@ -152,7 +152,7 @@ test-web: ##@Quality Run frontend unit tests (vitest)
 	pnpm --dir apps/web test
 
 audit: ##@Quality Dependency vulnerability audit (pip-audit + pnpm audit)
-	$(localenv) docker compose exec -T api uv run pip-audit --skip-editable
+	$(localenv) docker compose exec -T api sh -c "uv export --no-dev --no-emit-workspace --no-hashes -o /tmp/requirements-audit.txt && uv run pip-audit --disable-pip --no-deps -r /tmp/requirements-audit.txt"
 	pnpm --dir apps/web audit --audit-level=high
 
 check: lint typecheck build-web test-web test ##@Quality Full quality check (lint + typecheck + build + web/api tests)

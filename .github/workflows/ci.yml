@@ -67,7 +67,9 @@ jobs:
           enable-cache: true
 
       - run: uv sync --project apps/api
-      - run: cd apps/api && uv run pip-audit --skip-editable
+      # Audit the locked production dependencies, not the runner venv (which also holds pip-audit and its own pip)
+      - run: uv export --project apps/api --no-dev --no-emit-workspace --no-hashes -o requirements-audit.txt
+      - run: cd apps/api && uv run pip-audit --disable-pip --no-deps -r ../../requirements-audit.txt
 
       - uses: ./.github/actions/setup-web
       - run: cd apps/web && pnpm audit --audit-level=high

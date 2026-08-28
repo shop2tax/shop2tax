@@ -46,6 +46,7 @@ backups/
 # 🧪 Testing
 # ═══════════════════════════════════════════════════════════════════════════════
 .coverage
+requirements-audit.txt
 coverage.json
 htmlcov/
 .pytest_cache/
