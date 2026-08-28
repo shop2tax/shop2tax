@@ -503,7 +503,9 @@ async def sync_receipts(
 
     from app.models.sync_common import SyncResult
     from app.services.oms_sync import (
+        TAX_SETTING_NOT_CONFIGURED_MESSAGE,
         SyncAlreadyInProgressError,
+        TaxSettingNotConfiguredError,
         _sync_lock,
         sync_receipts_from_oms,
     )
@@ -577,10 +579,14 @@ async def sync_receipts(
         try:
             result = sync_task.result()
         except SyncAlreadyInProgressError:
-            yield json.dumps({"type": "error", "error": "Sync already in progress"}) + "\n"
+            yield json.dumps({"type": "error", "error": "Sync läuft bereits"}) + "\n"
             return
-        except Exception as error:
-            yield json.dumps({"type": "error", "error": str(error)}) + "\n"
+        except TaxSettingNotConfiguredError:
+            yield json.dumps({"type": "error", "error": TAX_SETTING_NOT_CONFIGURED_MESSAGE}) + "\n"
+            return
+        except Exception:
+            logger.exception("OMS sync failed")
+            yield json.dumps({"type": "error", "error": "Sync unerwartet fehlgeschlagen – Details im Server-Log"}) + "\n"
             return
 
         if result.errors:

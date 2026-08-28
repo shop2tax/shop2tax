@@ -41,6 +41,9 @@ from app.services.receipt_storage import store_file
 logger = logging.getLogger(__name__)
 
 
+TAX_SETTING_NOT_CONFIGURED_MESSAGE = "Bitte konfiguriere zuerst die Umsatzsteuer-Einstellung unter Einstellungen → Allgemein"
+
+
 class TaxSettingNotConfiguredError(Exception):
     """Raised when is_small_business setting has not been configured."""
 
@@ -144,7 +147,7 @@ async def _sync_receipts_internal(
     # PRECONDITION: Check if tax setting is configured
     site_settings = database.execute(select(SiteSettings).where(SiteSettings.id == 1)).scalar_one_or_none()
     if site_settings is None or site_settings.is_small_business is None:
-        raise TaxSettingNotConfiguredError("Bitte konfiguriere zuerst die Umsatzsteuer-Einstellung unter Einstellungen → Allgemein")
+        raise TaxSettingNotConfiguredError(TAX_SETTING_NOT_CONFIGURED_MESSAGE)
 
     is_small_business = site_settings.is_small_business
     set_labels_enabled = site_settings.oms_sync_set_labels
