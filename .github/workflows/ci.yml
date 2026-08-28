@@ -51,6 +51,7 @@ jobs:
         with:
           version: "0.10.10"
           enable-cache: true
+          save-cache: false
 
       - run: uv sync --project apps/api
       - run: cd apps/api && uv run ty check app
@@ -65,6 +66,7 @@ jobs:
         with:
           version: "0.10.10"
           enable-cache: true
+          save-cache: false
 
       - run: uv sync --project apps/api
       # Audit the locked production dependencies, not the runner venv (which also holds pip-audit and its own pip)
@@ -127,6 +129,7 @@ jobs:
         with:
           version: "0.10.10"
           enable-cache: true
+          save-cache: false
 
       - run: uv sync --project apps/api
       - run: cd apps/api && uv run pytest tests/ -v
