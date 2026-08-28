@@ -1,0 +1,17 @@
+{$DOMAIN:localhost} {
+	# Security Headers
+	header Strict-Transport-Security "max-age=31536000; includeSubDomains"
+	header X-Content-Type-Options "nosniff"
+	header X-Frame-Options "SAMEORIGIN"
+	header Referrer-Policy "strict-origin-when-cross-origin"
+
+	# Content Security Policy
+	# Note: unsafe-inline required for Nuxt/Vue SSR hydration and Nuxt UI components
+	header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+
+	reverse_proxy web:3000 {
+		# Overwrite X-Forwarded-For with the real remote address to prevent IP spoofing.
+		# Without this, Caddy appends to an attacker-controlled header, bypassing rate limiting.
+		header_up X-Forwarded-For {remote_host}
+	}
+}

@@ -1,0 +1,7 @@
+# Toolchain versions for local (non-Docker) tooling: `mise install`.
+# Keep in sync with .nvmrc, apps/web/package.json (packageManager),
+# apps/api/Dockerfile (UV_VERSION) and .github/workflows/ci.yml.
+[tools]
+node = "22"
+"npm:pnpm" = "11.5.2"
+uv = "0.10.10"

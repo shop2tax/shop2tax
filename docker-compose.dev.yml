@@ -1,0 +1,33 @@
+# shop2tax – development override (dev images, hot reload, source mounts)
+#
+# Layered on top of docker-compose.yml by the Makefile via COMPOSE_FILE.
+# Not meant for end users — install.sh never uses it.
+
+services:
+  api:
+    image: shop2tax-api-dev
+    build:
+      target: development
+    restart: "no"
+    environment:
+      - ALLOW_INSECURE_PROXY_SECRET=true
+      - ENVIRONMENT=development
+      - PAYPAL_SANDBOX=${PAYPAL_SANDBOX:-true}
+    volumes:
+      - ./apps/api/app:/app/apps/api/app
+      - ./apps/api/alembic:/app/apps/api/alembic
+      - ./apps/api/alembic.ini:/app/apps/api/alembic.ini
+      - ./apps/api/tests:/app/apps/api/tests
+      - ./apps/api/scripts:/app/apps/api/scripts
+      - ./ruff.toml:/app/ruff.toml
+    command: ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+  web:
+    image: shop2tax-web-dev
+    build:
+      target: development
+    restart: "no"
+    volumes:
+      - ./apps/web/app:/app/app
+      - ./apps/web/server:/app/server
+      - ./apps/web/nuxt.config.ts:/app/nuxt.config.ts

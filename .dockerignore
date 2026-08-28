@@ -1,0 +1,43 @@
+# Version control / OS / editors
+.git
+.gitignore
+.DS_Store
+.vscode
+.idea
+
+# Build artifacts and caches
+**/__pycache__
+**/*.py[cod]
+**/.venv
+**/node_modules
+**/.nuxt
+**/.output
+**/.nitro
+**/.cache
+**/dist
+**/.pytest_cache
+**/.ruff_cache
+**/.mypy_cache
+**/.coverage
+**/htmlcov
+
+# Env files — runtime env comes from compose, never from the image
+.env*
+!.env.example
+
+# Local state and dumps must never enter the build context
+backups/
+*.dump
+*.pgdump
+*.sql
+
+# Not needed in images
+.claude
+.tools
+.github
+specs/
+docs/
+*.md
+docker-compose*.yml
+**/tests/
+*.test.*

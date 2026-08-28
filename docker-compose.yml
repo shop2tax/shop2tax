@@ -1,0 +1,111 @@
+# shop2tax – Compose stack (production images)
+#
+# This is what install.sh starts. Both images are built from the production
+# stages of their Dockerfiles: no hot reload, no dev tooling, no source mounts.
+# Developers: the Makefile layers docker-compose.dev.yml on top via COMPOSE_FILE.
+#
+# All values come from .env (created by install.sh) or the shell environment.
+
+services:
+  db:
+    image: postgres:16-bookworm
+    restart: unless-stopped
+    networks:
+      - internal
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+      TZ: Europe/Berlin
+      PGTZ: Europe/Berlin
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: production
+    restart: unless-stopped
+    networks:
+      - internal
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - NUXT_PROXY_SECRET=${NUXT_PROXY_SECRET:-}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      # "production" enforces WORM-capable storage (GCS); local storage needs "development"
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - BILLBEE_API_KEY=${BILLBEE_API_KEY:-}
+      - BILLBEE_USERNAME=${BILLBEE_USERNAME:-}
+      - BILLBEE_PASSWORD=${BILLBEE_PASSWORD:-}
+      - BILLBEE_SYNC_LABEL=${BILLBEE_SYNC_LABEL:-shop2tax}
+      - PAYPAL_CLIENT_ID=${PAYPAL_CLIENT_ID:-}
+      - PAYPAL_CLIENT_SECRET=${PAYPAL_CLIENT_SECRET:-}
+      - PAYPAL_SANDBOX=${PAYPAL_SANDBOX:-false}
+      - STORAGE_BACKEND=${STORAGE_BACKEND:-local}
+      - LOCAL_STORAGE_PATH=${LOCAL_STORAGE_PATH:-/data/receipts}
+      - GCS_BUCKET_NAME=${GCS_BUCKET_NAME:-}
+      - GOOGLE_APPLICATION_CREDENTIALS=/secrets/google-credentials.json
+      - GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - EXTRACTION_RATE_LIMIT=${EXTRACTION_RATE_LIMIT:-30/hour}
+      - SENTRY_DSN=${SENTRY_DSN:-}
+      - SENTRY_ENVIRONMENT=${SENTRY_ENVIRONMENT:-}
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ${GOOGLE_SERVICE_ACCOUNT_KEY:-/dev/null}:/secrets/google-credentials.json:ro
+      - receipt_storage:/data/receipts
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      target: production
+    restart: unless-stopped
+    networks:
+      - internal
+    ports:
+      # Loopback only by default. WEB_BIND=0.0.0.0 exposes the UI on the network —
+      # do that only together with Auth Mode (GOOGLE_CLIENT_ID); Local Mode has no login.
+      - "${WEB_BIND:-127.0.0.1}:${WEB_PORT:-3002}:3000"
+    environment:
+      - API_URL=http://api:8000
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - NUXT_PROXY_SECRET=${NUXT_PROXY_SECRET:-}
+      - NUXT_SESSION_PASSWORD=${SESSION_SECRET:-}
+      - NUXT_OAUTH_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - NUXT_OAUTH_GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
+    depends_on:
+      - api
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+networks:
+  internal:
+    driver: bridge
+
+volumes:
+  pgdata:
+  receipt_storage:

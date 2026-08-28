@@ -1,0 +1,139 @@
+name: CI
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          version: "0.10.10"
+          enable-cache: true
+
+      - uses: ./.github/actions/setup-web
+
+      - run: uv lock --check
+      - run: uv sync --project apps/api
+      - run: uv run ruff check apps/api/
+      - run: cd apps/web && pnpm lint
+
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup-web
+
+      - run: cd apps/web && pnpm typecheck
+
+  typecheck-api:
+    name: Typecheck API
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          version: "0.10.10"
+          enable-cache: true
+
+      - run: uv sync --project apps/api
+      - run: cd apps/api && uv run ty check app
+
+  audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          version: "0.10.10"
+          enable-cache: true
+
+      - run: uv sync --project apps/api
+      - run: cd apps/api && uv run pip-audit --skip-editable
+
+      - uses: ./.github/actions/setup-web
+      - run: cd apps/web && pnpm audit --audit-level=high
+
+  build-web:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup-web
+
+      - run: cd apps/web && pnpm build
+
+  test-web:
+    name: Test Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup-web
+
+      - run: cd apps/web && pnpm test
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: shop2tax
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: shop2tax_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U shop2tax -d shop2tax_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://shop2tax:testpass@localhost:5432/shop2tax_test
+      NUXT_PROXY_SECRET: ci-test-secret
+      ALLOW_INSECURE_PROXY_SECRET: "true"
+      ENVIRONMENT: testing
+      # Storage config is required by Settings; the receipt tests mock the backend,
+      # so the path only needs to be set and absolute (it is never written to).
+      STORAGE_BACKEND: local
+      LOCAL_STORAGE_PATH: /tmp/receipts
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          version: "0.10.10"
+          enable-cache: true
+
+      - run: uv sync --project apps/api
+      - run: cd apps/api && uv run pytest tests/ -v
+
+  build-images:
+    name: Build Images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - run: docker build --file apps/api/Dockerfile --target production --tag shop2tax-api:ci .
+      - run: docker build --file apps/web/Dockerfile --target production --tag shop2tax-web:ci .

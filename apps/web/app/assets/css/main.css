@@ -1,0 +1,62 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+/* 🔤 Fonts — DM Sans + JetBrains Mono via Google Fonts */
+
+/* 🎨 Theme overrides */
+@theme {
+  --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* 🎨 Override blue palette — single source of truth for brand colors
+ * Accent/Buttons: #2563eb (blue-600)  |  Dark background: #1e3a5f (blue-950)
+ * Change hex values here → entire app updates automatically */
+@theme static {
+  --color-blue-50: #eff6ff;
+  --color-blue-100: #dbeafe;
+  --color-blue-200: #bfdbfe;
+  --color-blue-300: #93c5fd;
+  --color-blue-400: #60a5fa;
+  --color-blue-500: #3b82f6;
+  --color-blue-600: #2563eb;
+  --color-blue-700: #1d4ed8;
+  --color-blue-800: #1e40af;
+  --color-blue-900: #1e3a8a;
+  --color-blue-950: #1e3a5f;
+}
+
+/* 📐 Base styles */
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 🏷️ Display headings — DM Sans bold with tight tracking */
+.font-display {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+/* 💰 Tabular numbers for financial data */
+.font-tabular {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+}
+
+/* 🌊 Subtle page transitions */
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(4px);
+}
+
+.page-leave-to {
+  opacity: 0;
+}

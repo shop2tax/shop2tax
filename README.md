@@ -7,6 +7,7 @@
 
 <p align="center">
   <a href="https://www.gnu.org/licenses/agpl-3.0"><img src="https://img.shields.io/badge/License-AGPL_v3-blue.svg" alt="License: AGPL v3"></a>
+  <a href="https://github.com/shop2tax/shop2tax/actions/workflows/ci.yml"><img src="https://github.com/shop2tax/shop2tax/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
   <img src="https://img.shields.io/badge/Status-Early_Access-orange" alt="Status: Early Access">
   <img src="https://img.shields.io/badge/Made_with-Claude_Code-blueviolet" alt="Made with Claude Code">
 </p>
@@ -17,7 +18,9 @@
 
 Du verkaufst nebenberuflich auf Amazon, Etsy oder Shopify und nutzt eventuell sogar noch Billbee? Dein Steuerberater will DATEV-Dateien und du zahlst 15–30 €/Monat für Buchhaltungssoftware, von der du nur maximal 50 % der Features nutzt? Genauso ging es mir seit 2020 und ich wollte schon immer gerne diese laufenden Abo-Kosten reduzieren.
 
-Mit **shop2tax** versuche ich genau diesen Kosten entgegen zu wirken. Dabei ist es egal, ob du Kleinunternehmer nach §19 UStG bist oder umsatzsteuerpflichtig — shop2tax funktioniert für beides. Wichtig ist das du einen Steuerberater hast und mit diesen die Vorgänge besprechen kannst. 
+Mit **shop2tax** versuche ich genau diesen Kosten entgegenzuwirken. Dabei ist es egal, ob du Kleinunternehmer nach §19 UStG bist oder umsatzsteuerpflichtig — shop2tax funktioniert für beides. Wichtig ist, dass du einen Steuerberater hast und mit diesem die Vorgänge besprechen kannst.
+
+**Status:** shop2tax deckt aktuell den Weg von CSV-Import bis DATEV-Export ab. Rechnungsstellung und EÜR-Erstellung sind geplant. Umsatzsteuer-Voranmeldung ist nicht vorgesehen — dafür gibt es den Steuerberater.
 
 &nbsp;
 
@@ -30,11 +33,27 @@ Mit **shop2tax** versuche ich genau diesen Kosten entgegen zu wirken. Dabei ist 
 │  Etsy       │────▶│  SKR03-Konten │────▶│  DATEV   │
 │  Shopify    │     │  ~40 kuratiert│     │  EXTF    │
 │  Stripe     │     │               │     │          │
-│  Bank-CSV's │     └───────────────┘     └──────────┘
+│  Bank-CSVs  │     └───────────────┘     └──────────┘
 └─────────────┘           ▲                     │
                           │                     ▼
                  📎 Billbee Belege      📧 Steuerberater
 ```
+
+&nbsp;
+
+## 🚀 Quick Start
+
+```bash
+git clone https://github.com/shop2tax/shop2tax.git
+cd shop2tax
+./install.sh
+```
+
+> **Windows**: In PowerShell zuerst `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass` ausführen, dann `.\install.ps1`.
+
+Öffne **http://127.0.0.1:3002** im Browser.
+
+> **Local Mode aktiv**: Ohne Google OAuth-Konfiguration läuft die App sofort — kein Login nötig. Die Oberfläche ist standardmäßig nur auf deinem Rechner erreichbar (`127.0.0.1`). Alles Weitere steht in der [Installationsanleitung](docs/installation.md).
 
 &nbsp;
 
@@ -50,7 +69,7 @@ Mit **shop2tax** versuche ich genau diesen Kosten entgegen zu wirken. Dabei ist 
 ### Belege & OCR
 - **Optional konfigurierbare Belegextraktion mit 3 KI-Anbietern** — Google Gemini, OpenAI und Anthropic Claude. Modell frei wählbar, Kosten pro Beleg transparent im Dashboard
 - **ZUGFeRD / XRechnung** — Automatische XML-Extraktion aus PDF/A-3, kostenlos und ohne KI
-- **Belegverwaltung** — GoBD-konforme WORM-Speicherung in Google Cloud Storage, SHA-256-Integritätsprüfung
+- **Belegverwaltung** — GoBD-konforme WORM-Speicherung in Google Cloud Storage (oder lokal für den Einstieg), SHA-256-Integritätsprüfung
 - **Intelligente Kontierungsvorschläge** — Lernt aus finalisierten Belegen, welches SKR03-Konto zu welchem Lieferanten passt
 
 ### Buchhaltung & Export
@@ -60,27 +79,45 @@ Mit **shop2tax** versuche ich genau diesen Kosten entgegen zu wirken. Dabei ist 
 - **Interne Umbuchungen** — Geldbewegungen zwischen Konten verknüpfen (z. B. PayPal → Bank)
 
 ### Betrieb & Sicherheit
-- **Local Mode** — `docker compose up` und los, kein Login, kein Cloud-Account nötig
+- **Local Mode** — `./install.sh` und los, kein Login, kein Cloud-Account nötig
 - **Google OAuth** — Optional für Mehrbenutzerbetrieb
-- **GoBD-Compliance** — WORM-Storage, Audit-Log, Finalisierung mit Sperrung, Jahresabschluss
+- **GoBD-Compliance** — WORM-Storage, Audit-Log, Finalisierung mit Sperrung
 - **Dashboard** — Gewinn/Verlust, Kleinunternehmer-Schwelle, Buchungsfortschritt, KI-Kosten
+- **Sicherheit** — Rate Limiting, API nur über den Nuxt-Proxy erreichbar, keine Secrets im Image
 
-> **Austauschbar by Design:** shop2tax ist so gebaut, dass Integrationen jederzeit ersetzt werden können. Billbee lässt sich gegen eine andere WaWi tauschen, Google Cloud Storage gegen jeden Storage-Anbieter mit WORM-Support (z. B. AWS S3 Object Lock). Keine Anbieterabhängigkeit.
+> **Austauschbar by Design:** shop2tax ist so gebaut, dass Integrationen jederzeit ersetzt werden können. Billbee lässt sich gegen eine andere Warenwirtschaft tauschen, Google Cloud Storage gegen jeden Storage-Anbieter mit WORM-Support (z. B. AWS S3 Object Lock). Keine Anbieterabhängigkeit.
 
 &nbsp;
 
-## 🏗️ Tech Stack
+## 🏗️ Architektur
 
-| Layer | Technologie |
-|-------|-------------|
-| Frontend | Nuxt 4, Nuxt UI v4, pnpm |
-| Backend | FastAPI, Python 3.12, UV |
-| Datenbank | PostgreSQL 16, SQLAlchemy 2, Alembic |
-| Infrastruktur | Docker Compose, Caddy (Prod) |
+```
+┌─────────────┐     ┌────────────────────────┐     ┌─────────────┐     ┌──────────────┐
+│   Browser   │────▶│  Nuxt 4 (SSR + Auth)   │────▶│   FastAPI   │────▶│ PostgreSQL 16│
+└─────────────┘     └────────────────────────┘     └─────────────┘     └──────────────┘
+                           pnpm                      Python 3.12            SQLAlchemy
+                        Nuxt UI v4                       UV                   Alembic
+```
 
-## 🤖 Claude Code Integration
+**Alles läuft in Docker** — kein lokales Python/Node erforderlich. Für den Betrieb mit eigener Domain und HTTPS liegt eine Caddy-Konfiguration bei.
 
-Dieses Projekt enthält gepflegte [Claude Code](https://docs.anthropic.com/en/docs/claude-code) Skills für Backend (`shop2tax-api`) und Frontend (`shop2tax-web`). Die Skills dokumentieren Architektur-Patterns, Code-Konventionen und Projekt-spezifische Workflows — so kann Claude Code sofort produktiv mitarbeiten, ohne erst die Codebasis verstehen zu müssen.
+&nbsp;
+
+## 📚 Dokumentation
+
+| Dokument | Beschreibung |
+|----------|--------------|
+| [Installation](docs/installation.md) | Systemanforderungen, Anwender- vs. Entwickler-Setup, Update, Produktion |
+| [DATEV-Export](docs/datev-export.md) | Buchungsstapel-Format, BU-Schlüssel, Gegenkonto |
+| [Etsy-Import](docs/etsy-import.md) | Etsy Payment Account Statement, Transaktionstypen, §13b |
+| [GCS-Setup](docs/gcs-setup.md) | Google Cloud Storage für GoBD-konforme Belegablage |
+| [Google OAuth](docs/google-oauth-setup.md) | Mehrbenutzerbetrieb mit Google-Login |
+
+&nbsp;
+
+## 🤖 Entwickelt mit Claude Code
+
+Nach 6 Jahren sevDesk, lexoffice & Co. lag die Lösung nahe: selbst bauen. Dieses Projekt entsteht vollständig im Dialog mit KI — Architektur, Code, Tests und Dokumentation. [Claude Code](https://docs.anthropic.com/en/docs/claude-code) ist dabei nicht nur Werkzeug, sondern Entwicklungspartner. Das Repository enthält gepflegte `CLAUDE.md`-Kontextdateien für das Projekt, das Backend (`apps/api`) und das Frontend (`apps/web`) mit Architektur-Patterns und Konventionen — so kann Claude Code sofort produktiv mitarbeiten, ohne erst die Codebasis verstehen zu müssen.
 
 &nbsp;
 
@@ -102,6 +139,7 @@ Dieses Projekt enthält gepflegte [Claude Code](https://docs.anthropic.com/en/do
 - [x] PayPal-API-Sync (Transaktionen, Gebührentrennung)
 - [x] PayPal-Gebühren-Kontierung — Gebühren als separate Transactions importiert, SKR03 4970 via Pattern-Learning, monatlicher Kontoauszug als Sammelbeleg
 - [x] Automatische Belegzuordnung (Billbee) — Transaktionen und Belege per Order-ID verknüpfen, bidirektional nach CSV-Import und Billbee-Sync
+- [x] Austauschbare Warenwirtschafts-Anbindung — Provider-Abstraktion, Billbee als erste Implementierung, weitere Warenwirtschaftssysteme andockbar
 - [x] Dashboard (Gewinn/Verlust, Kleinunternehmer-Schwelle, KI-Kosten)
 - [x] Dark Mode
 - [x] Einrichtung ohne Konfiguration (install.sh / install.ps1)
@@ -125,7 +163,7 @@ Dieses Projekt enthält gepflegte [Claude Code](https://docs.anthropic.com/en/do
 
 ## 🤝 Mitmachen
 
-Das Projekt ist in aktiver Entwicklung. Feedback, Feature-Wünsche und Beiträge sind willkommen — einfach ein [Issue](https://github.com/shop2tax/shop2tax/issues) erstellen.
+Das Projekt ist in aktiver Entwicklung. Feedback, Feature-Wünsche und Beiträge sind willkommen — einfach ein [Issue](https://github.com/shop2tax/shop2tax/issues) erstellen. Für Pull Requests siehe [CONTRIBUTING.md](CONTRIBUTING.md).
 
 &nbsp;
 

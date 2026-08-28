@@ -1,0 +1,19 @@
+name: Setup Web
+description: Install pnpm, Node.js, and web dependencies
+
+runs:
+  using: composite
+  steps:
+    # pnpm version is read from the `packageManager` field in apps/web/package.json
+    - uses: pnpm/action-setup@v6
+      with:
+        package_json_file: apps/web/package.json
+
+    - uses: actions/setup-node@v6
+      with:
+        node-version-file: .nvmrc
+        cache: pnpm
+        cache-dependency-path: apps/web/pnpm-lock.yaml
+
+    - run: cd apps/web && pnpm install --frozen-lockfile
+      shell: bash
