@@ -676,7 +676,7 @@ async def call_vision_llm(
 
 
 # Provider → Settings attribute mapping
-_PROVIDER_API_KEY_ATTR = {
+_PROVIDER_SETTINGS_FIELD = {
     "gemini": "gemini_api_key",
     "openai": "openai_api_key",
     "anthropic": "anthropic_api_key",
@@ -830,14 +830,14 @@ async def extract_from_document(
         logger.debug("No AI provider configured in SiteSettings — returning manual")
         return ExtractionResult(source="manual")
 
-    api_key_attr = _PROVIDER_API_KEY_ATTR.get(provider)
-    if not api_key_attr:
+    settings_field = _PROVIDER_SETTINGS_FIELD.get(provider)
+    if not settings_field:
         logger.error("Unknown AI provider in SiteSettings: %s", provider)
         return ExtractionResult(source="manual")
 
-    api_key = getattr(settings, api_key_attr, "")
+    api_key = getattr(settings, settings_field, "")
     if not api_key:
-        logger.warning("AI provider %s configured but no API key set (%s)", provider, api_key_attr)
+        logger.warning("AI provider %s configured but no API key set (%s)", provider, settings_field)
         return ExtractionResult(source="manual")
 
     pages_sent = min(pages_total, MAX_PAGES_FOR_LLM) if pages_total else None

@@ -153,7 +153,8 @@ async def _sync_receipts_internal(
     try:
         orders = await provider.fetch_orders(store_ids=store_ids, min_date=min_order_date, max_date=max_order_date)
     except Exception as error:
-        result.errors.append(f"Failed to fetch orders: {error}")
+        logger.exception("Failed to fetch orders from OMS provider")
+        result.errors.append(f"Failed to fetch orders: {type(error).__name__}")
         return result
 
     result.fetched_count = len(orders)
@@ -207,8 +208,8 @@ async def _sync_receipts_internal(
             except DuplicateOmsReceiptError:
                 result.skipped_count += 1
             except Exception as error:
-                logger.exception(f"Failed to create receipt for order {order.order_number}")
-                result.errors.append(f"Order {order.order_number}: {error}")
+                logger.exception("Failed to create receipt for order %s", order.order_number)
+                result.errors.append(f"Order {order.order_number}: {type(error).__name__}")
 
         # C3: Commit chunk
         database.commit()

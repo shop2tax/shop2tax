@@ -358,8 +358,9 @@ class BillbeeProvider:
 
                 try:
                     return base64.b64decode(pdf_data), None
-                except binascii.Error as decode_error:
-                    return None, f"PDF decode failed: corrupted Base64 data ({decode_error})"
+                except binascii.Error:
+                    logger.warning("PDF decode failed for order %s: corrupted Base64 data", order_id)
+                    return None, "PDF decode failed: corrupted Base64 data"
             except httpx.TimeoutException:
                 return None, "PDF fetch failed: timeout after 30s"
             except httpx.HTTPStatusError as error:
@@ -390,7 +391,8 @@ class BillbeeProvider:
                 )
                 return True
             except Exception as error:
-                errors.append(f"Label batch failed ({len(batch_ids)} orders): {error}")
+                logger.exception("Label batch failed for %d orders", len(batch_ids))
+                errors.append(f"Label batch failed ({len(batch_ids)} orders): {type(error).__name__}")
                 return False
 
         async with httpx.AsyncClient() as client:
