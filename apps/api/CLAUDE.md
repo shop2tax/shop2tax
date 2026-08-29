@@ -46,3 +46,4 @@ OMS providers (order/receipt sync via pluggable `OmsProvider`; Billbee is the fi
 - **`database.py` uses lazy engine init** — avoids import-time DB connections, important for tests
 - **Lifespan auto-migrates** — `main.py` runs `alembic upgrade head` on every startup
 - **Lifespan validates GCS** — Checks DSGVO location + retention policy on startup
+- **Sentry scrubs secrets** — `main.py` inits Sentry with a `before_send` hook that redacts the `x-proxy-secret`/`x-user-*` request headers, plus `include_local_variables=False` and `send_default_pii=False`. Do not remove these — they keep `NUXT_PROXY_SECRET` and PII out of error events (covered by `tests/test_sentry_scrub.py`).
