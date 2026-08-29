@@ -80,7 +80,7 @@ cd shop2tax
 
 ### Betrieb & Sicherheit
 - **Local Mode** — `./install.sh` und los, kein Login, kein Cloud-Account nötig
-- **Google OAuth** — Optional für Mehrbenutzerbetrieb
+- **Google OAuth** — Optional für Mehrbenutzerbetrieb, mit Login-Allowlist (`ALLOWED_EMAILS` / `ALLOWED_EMAIL_DOMAINS`) zum Einschränken erlaubter Konten
 - **GoBD-Compliance** — WORM-Storage, Audit-Log, Finalisierung mit Sperrung
 - **Dashboard** — Gewinn/Verlust, Kleinunternehmer-Schwelle, Buchungsfortschritt, KI-Kosten
 - **Sicherheit** — Rate Limiting, API nur über den Nuxt-Proxy erreichbar, keine Secrets im Image

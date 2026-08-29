@@ -164,6 +164,8 @@ Diese Variablen aktivieren zusätzliche Features:
 |----------|---------|----------|
 | `GOOGLE_CLIENT_ID` | Google OAuth Login | — (Local Mode) |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth Login | — |
+| `ALLOWED_EMAILS` | Login-Allowlist: erlaubte E-Mail-Adressen (kommagetrennt) | — (im Auth Mode Pflicht) |
+| `ALLOWED_EMAIL_DOMAINS` | Login-Allowlist: erlaubte Domains (kommagetrennt; `*` = alle Konten) | — (im Auth Mode Pflicht) |
 | `STORAGE_BACKEND` | Belegspeicher (`local` oder `gcs`) | `local` |
 | `GCS_BUCKET_NAME` | GCS-Bucket für Belege | — |
 | `BILLBEE_API_KEY` | Billbee-Integration | — |
@@ -180,6 +182,8 @@ shop2tax erkennt automatisch, welcher Modus aktiv ist:
 | **Auth Mode** | `GOOGLE_CLIENT_ID` gesetzt | Google OAuth erforderlich, Session-Management |
 
 Für Mehrbenutzerbetrieb mit Login siehe [Google OAuth Setup](google-oauth-setup.md).
+
+> ⚠️ **Auth Mode erfordert eine Login-Allowlist (secure by default).** Der Google-Login akzeptiert sonst jede Google-Adresse. Setze `ALLOWED_EMAILS` und/oder `ALLOWED_EMAIL_DOMAINS` — **ohne Allowlist wird im Auth Mode jeder Login abgewiesen** (die App läuft, aber niemand kommt rein; Warnung im Log). Um bewusst jedes Konto zuzulassen: `ALLOWED_EMAIL_DOMAINS=*`. Details: [Login-Allowlist](google-oauth-setup.md#schritt-4b-zugriff-einschränken-login-allowlist).
 
 ## Backup & Datensicherheit
 

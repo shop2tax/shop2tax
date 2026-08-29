@@ -19,7 +19,8 @@ Nuxt 4 + Nuxt UI v4 frontend. For implementation patterns, UI rules, and trouble
 - **Auth** — Google OAuth via nuxt-auth-utils. Server middleware injects `X-User-*` + `X-Proxy-Secret` headers.
 - **Session** — Cookie-based, 120min idle timeout, throttled activity updates (60s)
 - **State** — Pure composables (queries via `useFetch`, mutations via `$fetch`), no Pinia
-- **Entrypoint** — `entrypoint.sh` maps env vars for production (SESSION_SECRET→NUXT_SESSION_PASSWORD, GOOGLE_*→NUXT_OAUTH_GOOGLE_*, API_URL→NUXT_API_URL)
+- **Entrypoint** — `entrypoint.sh` maps env vars for production (SESSION_SECRET→NUXT_SESSION_PASSWORD, GOOGLE_*→NUXT_OAUTH_GOOGLE_*, ALLOWED_EMAILS/ALLOWED_EMAIL_DOMAINS→NUXT_ALLOWED_*, API_URL→NUXT_API_URL)
+- **Login allowlist** — Auth Mode gate in `server/routes/auth/google.get.ts` via `server/utils/emailAllowlist.ts` (`isLoginAllowed`, `isAllowlistConfigured`). Config: `allowedEmails`/`allowedEmailDomains` runtimeConfig. Fail-closed: empty = deny (app still runs); `validate-env.ts` warns at startup when unset. Login route redirects `?error=forbidden` (not on list) vs `?error=login_not_configured` (no allowlist). `ALLOWED_EMAIL_DOMAINS=*` = explicit opt-in to allow any Google account.
 
 ## Dependencies
 

@@ -109,6 +109,32 @@ NUXT_OAUTH_GOOGLE_CLIENT_SECRET=GOCSPX-xxxxxxxxxxxxxxxxxxxxxxxx
 
 > 💡 Beide Variablenpaare müssen denselben Wert haben. `GOOGLE_CLIENT_ID` wird vom API-Backend gelesen, `NUXT_OAUTH_*` vom Frontend.
 
+## Schritt 4b: Zugriff einschränken (Login-Allowlist)
+
+> ⚠️ **Pflicht im Auth-Modus.** Der Google-Zustimmungsbildschirm vom Typ **Extern** lässt nach der Veröffentlichung **jedes** Google-Konto zu. Ohne Allowlist könnte sich jede Person mit einem Google-Konto anmelden und sähe alle Buchhaltungsdaten (geteilter Mandant). Deshalb wird im Auth-Modus ohne Allowlist **jeder Login abgewiesen** — secure by default. Die App läuft weiter, aber niemand kommt rein, bis du eine Allowlist setzt.
+
+Trage in der `.env` eine oder beide Listen ein (kommagetrennt, Groß-/Kleinschreibung egal):
+
+```bash
+# Nur diese exakten Adressen dürfen sich anmelden
+ALLOWED_EMAILS=inhaber@example.com,steuerberater@example.com
+
+# Oder: jede Adresse dieser Domains
+ALLOWED_EMAIL_DOMAINS=example.com
+```
+
+- Ein Login ist erlaubt, wenn die von Google **verifizierte** E-Mail in `ALLOWED_EMAILS` steht **oder** ihre Domain (Teil nach dem `@`) in `ALLOWED_EMAIL_DOMAINS`.
+- Nicht freigeschaltete Konten werden vor dem Anlegen einer Session abgewiesen und landen auf `/login?error=forbidden` mit der Meldung „Dieses Konto ist für diese Instanz nicht freigeschaltet.".
+- **Ohne Allowlist wird jeder Login abgewiesen** (die App läuft weiter). Der Login-Versuch landet mit `?error=login_not_configured` auf der Login-Seite mit dem Hinweis, dass keine Allowlist gesetzt ist; zusätzlich warnt die App beim Start im Log:
+
+  ```
+  [shop2tax] SECURITY: Auth Mode is active but no login allowlist is set —
+  ALL logins are denied until you configure one.
+  ```
+- **Bewusst offen für alle:** Wer wirklich jedes Google-Konto zulassen will (z. B. eine öffentliche Demo), setzt `ALLOWED_EMAIL_DOMAINS=*` — als ausdrücklichen Opt-out, nicht als stillen Default.
+
+> 💡 In Produktion werden die Werte über `NUXT_ALLOWED_EMAILS` / `NUXT_ALLOWED_EMAIL_DOMAINS` gesetzt; `entrypoint.sh` übernimmt die Zuordnung aus `ALLOWED_*` automatisch (wie bei den anderen Secrets).
+
 ## Schritt 5: App neu starten
 
 ```bash
