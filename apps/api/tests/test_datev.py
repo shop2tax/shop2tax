@@ -12,7 +12,7 @@ from app.models.skr03 import AccountCategory, SKR03Account
 from app.models.source import SourceType, TransactionSourceConfig
 from app.models.transaction import Transaction
 from app.schemas.datev import DatevConfig
-from app.services.datev import DatevExportService
+from app.services.datev import DatevExportService, neutralize_formula_cell
 
 from tests.conftest import TEST_SOURCE_CONFIG_ID, _ensure_test_source_config
 
@@ -1809,3 +1809,62 @@ class TestReverseChargeDatevExport:
         # BU-Schlüssel should come from SKR03 account (3 = 19% revenue)
         bu_schluessel = row[8]
         assert bu_schluessel == "3", f"Expected BU 3 from SKR03 account, got {bu_schluessel}"
+
+
+class TestFormulaNeutralization:
+    """CSV formula injection is neutralized at the DATEV export write boundary (F2/F3)."""
+
+    def should_prefix_cells_starting_with_a_formula_trigger(self):
+        assert neutralize_formula_cell("=SUM(A1)") == "'=SUM(A1)"
+        assert neutralize_formula_cell("+1+1") == "'+1+1"
+        assert neutralize_formula_cell("-cmd") == "'-cmd"
+        assert neutralize_formula_cell("@foo") == "'@foo"
+        assert neutralize_formula_cell("\ttab") == "'\ttab"
+        assert neutralize_formula_cell("\rcr") == "'\rcr"
+
+    def should_neutralize_stacked_prefixes(self):
+        # A leading "==" still starts with "=" → gets one apostrophe, becomes inert text
+        assert neutralize_formula_cell('==HYPERLINK("x","y")') == '\'==HYPERLINK("x","y")'
+
+    def should_leave_normal_values_unchanged(self):
+        assert neutralize_formula_cell("Max Mustermann") == "Max Mustermann"
+        assert neutralize_formula_cell("") == ""
+        assert neutralize_formula_cell(" leading space") == " leading space"
+
+    def should_neutralize_attacker_counterparty_in_export_row(self, seeded_with_source_configs, example_user):
+        """A counterparty crafted as a formula is neutralized in the row's free-text
+        columns, while the structured amount column stays a clean number."""
+        session = seeded_with_source_configs
+        _ensure_dkb_source_config(session)
+
+        transaction = Transaction(
+            id="tx-formula",
+            user_id=example_user.id,
+            date=date(2026, 2, 15),
+            amount=Decimal("119.00"),
+            counterparty='=HYPERLINK("http://attacker/","reload")',
+            description="Invoice",
+            source_config_id=DKB_SOURCE_CONFIG_ID,
+        )
+        session.add(transaction)
+        session.flush()
+
+        _link_receipt_with_line_items(
+            session,
+            transaction,
+            [
+                (8400, Decimal("119.00"), "Product sale"),
+            ],
+        )
+        session.flush()
+        session.refresh(transaction)
+
+        service = DatevExportService(session)
+        booking_lines = service.transaction_to_booking_lines(transaction)
+        row = service.booking_line_to_row(booking_lines[0])
+
+        # Free-text columns (Beleginfo-Name = counterparty, Buchungstext) are neutralized
+        assert row[25].startswith("'="), f"Beleginfo-Name not neutralized: {row[25]!r}"
+        assert row[13].startswith("'="), f"Buchungstext not neutralized: {row[13]!r}"
+        # Structured amount column is left untouched (not prefixed)
+        assert row[0] == "119,00", f"Amount column was altered: {row[0]!r}"

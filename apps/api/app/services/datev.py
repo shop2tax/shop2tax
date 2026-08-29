@@ -64,6 +64,29 @@ def sanitize_filename(name: str) -> str:
     return re.sub(r"[^a-zA-Z0-9_.-]", "_", name)
 
 
+# Characters that make a spreadsheet treat a cell as a formula when the CSV is
+# opened (CSV formula injection). Leading tab / carriage return can shift a
+# value into an adjacent formula cell, so they are neutralized as well.
+FORMULA_TRIGGER_CHARACTERS: frozenset[str] = frozenset({"=", "+", "-", "@", "\t", "\r"})
+
+
+def neutralize_formula_cell(value: str) -> str:
+    """Prevent CSV formula injection when a cell is opened in a spreadsheet.
+
+    Prepends a single apostrophe when the value is non-empty and its first
+    character can trigger formula evaluation (one of ``= + - @`` or a tab /
+    carriage return). Any other value is returned unchanged and byte-identical.
+
+    The first-character-only check is intentional: it also neutralizes stacked
+    prefixes (a leading ``==`` still starts with ``=``) without scanning or
+    rewriting the rest of the value, so it is O(1) and cannot be abused to
+    burn CPU on a crafted cell.
+    """
+    if value and value[0] in FORMULA_TRIGGER_CHARACTERS:
+        return "'" + value
+    return value
+
+
 class DatevExportService:
     """Service for generating DATEV export files."""
 
@@ -422,7 +445,16 @@ class DatevExportService:
         # Column 114: Leistungsdatum (also stored separately)
         row[113] = booking_line.beleginfo_leistungsdatum or ""
 
-        return row
+        # Neutralize CSV formula injection in every free-text column. Structured
+        # numeric/date/account columns are left untouched so their values stay
+        # byte-identical (amounts may legitimately start with '-').
+        structured_column_indices = frozenset(
+            {0, 1, 6, 7, 8, 9, 23, 29, 31, 33, 113}
+        )
+        return [
+            cell if index in structured_column_indices else neutralize_formula_cell(cell)
+            for index, cell in enumerate(row)
+        ]
 
     def generate_csv_bytes(
         self,
