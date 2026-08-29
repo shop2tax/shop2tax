@@ -15,6 +15,19 @@ const error = computed(() => {
   return route.query.error as string | undefined
 })
 
+const errorMessage = computed(() => {
+  switch (error.value) {
+    case 'oauth_failed':
+      return 'Google Anmeldung fehlgeschlagen. Bitte erneut versuchen.'
+    case 'forbidden':
+      return 'Dieses Konto ist für diese Instanz nicht freigeschaltet.'
+    case 'login_not_configured':
+      return 'Der Login ist noch nicht konfiguriert: Es ist keine Allowlist gesetzt. Der Betreiber muss ALLOWED_EMAILS oder ALLOWED_EMAIL_DOMAINS hinterlegen.'
+    default:
+      return error.value
+  }
+})
+
 // Fetch company name for login page footer
 const { data: publicSettings } = usePublicSettings()
 const companyName = computed(() => publicSettings.value?.company_name || 'shop2tax')
@@ -91,7 +104,7 @@ const companyName = computed(() => publicSettings.value?.company_name || 'shop2t
           color="error"
           variant="soft"
           title="Anmeldung fehlgeschlagen"
-          :description="error === 'oauth_failed' ? 'Google Anmeldung fehlgeschlagen. Bitte erneut versuchen.' : error"
+          :description="errorMessage"
         />
 
         <!-- Google login — no card wrapper, just the button -->

@@ -37,4 +37,20 @@ export default defineNitroPlugin(() => {
       + 'Create OAuth app at: https://console.cloud.google.com/apis/credentials',
     )
   }
+
+  // Login allowlist advisory. The actual enforcement is fail-closed in
+  // isLoginAllowed() (server/utils/emailAllowlist.ts): in Auth Mode without an
+  // allowlist, EVERY login is denied — secure by default. This check does not
+  // throw on purpose: a thrown startup error would take the whole app down, so
+  // instead the app stays up (login-blocked) and warns loudly so the operator
+  // knows why nobody can sign in. To deliberately allow any Google account, set
+  // ALLOWED_EMAIL_DOMAINS=*.
+  const hasLoginAllowlist = Boolean(config.allowedEmails?.trim() || config.allowedEmailDomains?.trim())
+  if (!hasLoginAllowlist) {
+    console.warn(
+      '[shop2tax] SECURITY: Auth Mode is active but no login allowlist is set — '
+      + 'ALL logins are denied until you configure one. '
+      + 'Set ALLOWED_EMAILS and/or ALLOWED_EMAIL_DOMAINS (or ALLOWED_EMAIL_DOMAINS=* to allow any Google account).',
+    )
+  }
 })

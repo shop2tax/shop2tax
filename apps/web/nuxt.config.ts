@@ -67,6 +67,13 @@ export default defineNuxtConfig({
       },
     },
     apiUrl: process.env.API_URL || 'http://localhost:8000',
+    // Login allowlist (Auth Mode). Comma-separated, case-insensitive.
+    // When BOTH are empty, any Google account may sign in (default-open,
+    // backward compatible with single-operator deployments). Set either to
+    // restrict access. Production overrides: NUXT_ALLOWED_EMAILS /
+    // NUXT_ALLOWED_EMAIL_DOMAINS (mapped from ALLOWED_* by entrypoint.sh).
+    allowedEmails: process.env.ALLOWED_EMAILS || '',
+    allowedEmailDomains: process.env.ALLOWED_EMAIL_DOMAINS || '',
   },
 
   eslint: {
