@@ -48,6 +48,8 @@ Die exportierte CSV besteht aus drei Abschnitten:
 | M | Skonto | Skonto | |
 | N | Buchungstext | Buchungsbeschreibung | `Etsy Order #123` |
 
+> **CSV-Formel-Injection**: Freitext-Spalten (Buchungstext, Beleginfo-Name/Beschreibung, Belegfelder) können extern beeinflusste Werte enthalten (z. B. Käufer-/Zahlernamen aus Marktplatz-/PayPal-Sync). Beginnt ein solcher Wert mit `=`, `+`, `-`, `@`, Tab oder CR, stellt der Export ihm ein `'` voran, damit Excel/LibreOffice/DATEV ihn als Text statt als Formel behandelt. Strukturierte Spalten (Beträge, Datum, Konten) bleiben unangetastet, bleiben also maschinenlesbar.
+
 ## Gegenkonto-Ableitung
 
 Das Gegenkonto wird aus der Transaktionsquelle abgeleitet:
