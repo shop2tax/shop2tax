@@ -5,7 +5,17 @@ from __future__ import annotations
 import datetime
 from decimal import Decimal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
+
+# Single-character CSV delimiters accepted for generic/bank CSV imports.
+#
+# pandas treats any `sep` longer than one character as a regular expression run
+# with the Python engine, which turns a free-form delimiter into a ReDoS /
+# event-loop-DoS vector. Restricting the input to these literal single characters
+# keeps `pd.read_csv` on the fast literal-separator path. Mirrors the candidates
+# probed by `detect_delimiter` in the generic CSV parser (comma, semicolon, tab,
+# pipe) and the delimiter options offered by the web import wizards.
+ALLOWED_CSV_DELIMITERS: frozenset[str] = frozenset({",", ";", "\t", "|"})
 
 
 class CsvFormatInfo(BaseModel):
@@ -128,6 +138,22 @@ class GenericCsvMappingRequest(BaseModel):
     column_filter: str | None = None
     # NOTE: filter_include_values is NOT here — it's a separate Query() param in the router
     # because Depends() with Pydantic can't parse list[str] from repeated query params
+
+    @field_validator("delimiter")
+    @classmethod
+    def validate_delimiter(cls, value: str) -> str:
+        """Reject any delimiter pandas would treat as a regular expression.
+
+        A `sep` of more than one character makes `pd.read_csv` compile the value
+        as a regex on the Python engine, so an attacker-supplied catastrophic
+        pattern (e.g. ``(a+)+$``) plus matching content pegs the CPU and blocks
+        the async event loop. Constraining the delimiter to a single literal
+        character from the allowlist removes that sink entirely.
+        """
+        if value not in ALLOWED_CSV_DELIMITERS:
+            msg = "Delimiter must be a single character: comma ',', semicolon ';', tab, or pipe '|'"
+            raise ValueError(msg)
+        return value
 
 
 class GenericCsvParseResponse(BaseModel):
