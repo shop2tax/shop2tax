@@ -5,6 +5,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, Request
+from sentry_sdk.types import Event, Hint
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from starlette.responses import JSONResponse
@@ -26,6 +27,27 @@ from app.routers import (
     tags_router,
     transactions_router,
 )
+
+
+def _scrub_sentry_event(event: Event, hint: Hint) -> Event | None:
+    """Redact sensitive request headers before an event is sent to Sentry.
+
+    The Nuxt proxy secret (``x-proxy-secret``) and the ``x-user-*`` identity
+    headers authenticate/identify the internal proxy call and must never leave
+    the instance. The same secret also appears as a stack-frame local variable
+    (the ``get_current_user`` parameters); that leak is closed separately via
+    ``include_local_variables=False`` in ``sentry_sdk.init``. This hook is
+    resilient to a missing request/headers section and never raises.
+    """
+    sensitive_headers = {"x-proxy-secret", "x-user-id", "x-user-email", "x-user-name"}
+    if "request" not in event:
+        return event
+    request = event["request"]
+    headers = request.get("headers")
+    if not isinstance(headers, dict):
+        return event
+    request["headers"] = {key: "[Filtered]" if isinstance(key, str) and key.lower() in sensitive_headers else value for key, value in headers.items()}
+    return event
 
 
 def _sanitize_proxy_env() -> None:
@@ -142,7 +164,12 @@ async def _startup() -> None:
     if settings.sentry_dsn:
         import sentry_sdk
 
-        sentry_sdk.init(dsn=settings.sentry_dsn)
+        sentry_sdk.init(
+            dsn=settings.sentry_dsn,
+            send_default_pii=False,
+            include_local_variables=False,
+            before_send=_scrub_sentry_event,
+        )
 
 
 app = FastAPI(title="shop2tax", version="0.1.0", lifespan=lifespan)
